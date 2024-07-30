@@ -29,12 +29,12 @@ jobs:
           DOORKEEPER_API_KEY: ${{ secrets.DOORKEEPER_API_KEY }}
         run: python update_sw_eventlist.py
 
-      - name: Commit updated CSV
+      - name: Commit updated files
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add startup_weekend_events.csv
-          git commit -m 'Update CSV file'
+          git add startup_weekend_events.csv last_run_time.txt
+          git commit -m 'Update CSV and timestamp'
           git push
 
       - name: Clean up files
@@ -42,6 +42,7 @@ jobs:
           mkdir public
           mv index.html public/
           mv startup_weekend_events.csv public/
+          mv last_run_time.txt public/
           mv streamlit_app.py public/
 
       - name: Deploy to GitHub Pages

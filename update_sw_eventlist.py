@@ -2,6 +2,8 @@ import os
 import httpx
 import pandas as pd
 from dotenv import load_dotenv
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # 環境変数の読み込み
 load_dotenv()
@@ -41,4 +43,12 @@ df = pd.DataFrame(event_data)
 csv_file = "startup_weekend_events.csv"
 df.to_csv(csv_file, index=False, encoding="utf-8-sig")
 
+# 実行日時を記録する
+now = datetime.now(ZoneInfo("Asia/Tokyo"))
+last_run_time_file = "last_run_time.txt"
+
+with open(last_run_time_file, "w", encoding="utf-8") as f:
+    f.write(now.isoformat())
+
 print(f"イベント情報を {csv_file} に保存しました")
+print(f"実行日時を {last_run_time_file} に保存しました")
