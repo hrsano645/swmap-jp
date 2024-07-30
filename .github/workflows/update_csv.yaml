@@ -32,7 +32,7 @@ jobs:
       - name: Commit updated files
         run: |
           git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add startup_weekend_events.csv last_run_time.txt
           git commit -m 'Update CSV and timestamp'
           git push
