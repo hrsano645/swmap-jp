@@ -3,6 +3,7 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 st.set_page_config(layout="wide")
 
@@ -59,8 +60,10 @@ if csv_path.exists():
             # 緯度と経度の列を削除
             event_data = event_data.drop(columns=[lat_column, lon_column])
 
-            # 日時の表示を日本国内向けに変更
-            event_data[date_column] = pd.to_datetime(event_data[date_column])
+            # 日時の表示を日本時間に変換
+            event_data[date_column] = pd.to_datetime(
+                event_data[date_column]
+            ).dt.tz_convert(ZoneInfo("Asia/Tokyo"))
             event_data[date_column] = event_data[date_column].dt.strftime(
                 "%Y-%m-%d %H:%M"
             )
@@ -69,8 +72,10 @@ if csv_path.exists():
             map_data = data.copy()
             map_data["index"] = map_data.index.astype(str)  # インデックスを文字列に変換
 
-            # 日付フォーマットを変更
-            map_data[date_column] = pd.to_datetime(map_data[date_column])
+            # 日付フォーマットを日本時間に変換
+            map_data[date_column] = pd.to_datetime(map_data[date_column]).dt.tz_convert(
+                ZoneInfo("Asia/Tokyo")
+            )
             map_data[date_column] = map_data[date_column].dt.strftime("%Y-%m-%d %H:%M")
 
             # 詳細情報を含むカラムを作成
