@@ -8,9 +8,10 @@
 
 以下のURLからアクセスできます。
 
-<!-- [Startup Weekend Map in Japan](https://[pathを載せる]) -->
+[Startup Weekend Map in Japan](https://hrsano645.github.io/swmap-jp/)
 
 <!-- <TODO: 2024-07-30 表示されるサイトの画像を入れる> -->
+![swmap-jp screenshot](./app_screenshot.png)
 
 * イベント一覧には、イベント名、開催日時、開催場所、URLが表示されます。
 * マップには上記情報が表示され、イベントページのリンクがあります。
