@@ -24,6 +24,7 @@ with st.sidebar.expander("このサイトは？", expanded=True):
         * Startup Weekend オーガナイザーの個人プロジェクトです。不備がありましたら以下の連絡先までお知らせください。
 
         ### 作成者
+
         * Hiroshi Sano: [X](https://x.com/hrs_sano645), [FB](https://www.facebook.com/hrs.sano645)
         """
     )
@@ -42,7 +43,7 @@ if csv_path.exists():
         data = load_data_from_file(csv_path)
 
         # イベントの見つかった件数を表示
-        st.markdown(f"### 見つかったイベントの件数: {len(data)}件")
+        st.markdown(f"見つかったイベントの件数: **{len(data)}件**")
 
         # デフォルトの列インデックスを設定
         lat_column = data.columns[3]  # 緯度列
