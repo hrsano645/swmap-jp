@@ -24,6 +24,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run update_sw_eventlist.py
+        env:
+          DOORKEEPER_API_KEY: ${{ secrets.DOORKEEPER_API_KEY }}
         run: python update_sw_eventlist.py
 
       - name: Commit updated CSV
