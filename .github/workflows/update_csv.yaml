@@ -1,4 +1,4 @@
-name: Update sw eventlist CSV and Deploy to GitHub Pages
+name: Update CSV and Deploy to GitHub Pages
 
 on:
   schedule:
