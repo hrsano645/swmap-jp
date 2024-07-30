@@ -16,7 +16,7 @@ with st.sidebar.expander("このサイトは？", expanded=True):
 
         ソースコードはGitHubにて公開しています。修正提案は歓迎しています。
 
-        → [GitHub]([ここにurlを入れる])
+        → [GitHub](https://github.com/hrsano645/swmap-jp)
         
         ### 注意事項
 
