@@ -3,7 +3,6 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 st.set_page_config(layout="wide")
 
@@ -32,6 +31,7 @@ with st.sidebar.expander("このサイトは？", expanded=True):
 
 # CSVファイルのパスを設定
 csv_path = Path("./startup_weekend_events.csv")
+last_run_time_path = Path("./last_run_time.txt")
 
 if csv_path.exists():
     try:
@@ -44,7 +44,16 @@ if csv_path.exists():
         data = load_data_from_file(csv_path)
 
         # イベントの見つかった件数を表示
-        st.markdown(f"見つかったイベントの件数: **{len(data)}件**")
+        st.info(f"見つかったイベントの件数: **{len(data)}件**")
+
+        if last_run_time_path.exists():
+            with open(last_run_time_path, "r") as file:
+                last_run_time = file.read().strip()
+                last_run_time = pd.to_datetime(last_run_time).tz_convert("Asia/Tokyo")
+                formatted_last_run_time = last_run_time.strftime("%Y-%m-%d %H:%M")
+                st.info(f"最終更新日: **{formatted_last_run_time}**")
+        else:
+            st.warning("最終更新が確認できませんでした")
 
         # デフォルトの列インデックスを設定
         lat_column = data.columns[3]  # 緯度列
@@ -60,10 +69,10 @@ if csv_path.exists():
             # 緯度と経度の列を削除
             event_data = event_data.drop(columns=[lat_column, lon_column])
 
-            # 日時の表示を日本時間に変換
+            # 日時の表示を日本国内向けに変更
             event_data[date_column] = pd.to_datetime(
                 event_data[date_column]
-            ).dt.tz_convert(ZoneInfo("Asia/Tokyo"))
+            ).dt.tz_convert("Asia/Tokyo")
             event_data[date_column] = event_data[date_column].dt.strftime(
                 "%Y-%m-%d %H:%M"
             )
@@ -72,9 +81,9 @@ if csv_path.exists():
             map_data = data.copy()
             map_data["index"] = map_data.index.astype(str)  # インデックスを文字列に変換
 
-            # 日付フォーマットを日本時間に変換
+            # 日時の表示を日本国内向けに変更
             map_data[date_column] = pd.to_datetime(map_data[date_column]).dt.tz_convert(
-                ZoneInfo("Asia/Tokyo")
+                "Asia/Tokyo"
             )
             map_data[date_column] = map_data[date_column].dt.strftime("%Y-%m-%d %H:%M")
 
