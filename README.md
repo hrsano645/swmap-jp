@@ -27,7 +27,7 @@
 
 ## 開発環境
 
-[Streamlit](https://streamlit.io/)を利用しています。公開先では[stlite](https://share.stlite.net)を利用しています。
+[Streamlit](https://streamlit.io/)を利用しています。公開先では[stlite](https://edit.share.stlite.net)を利用しています。
 
 Pythonは3.11を推奨です（stliteを利用するため）
 
