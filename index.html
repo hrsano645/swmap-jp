@@ -22,9 +22,11 @@
           requirements: ['pandas', 'streamlit-folium'], // Packages to install
           entrypoint: 'streamlit_app.py', // The target file of the `streamlit run` command
           files: {
-            // ここのパスは github pages側のパスにする
             'startup_weekend_events.csv': {
               url: './startup_weekend_events.csv',
+            },
+            'last_run_time.txt': {
+              url: './last_run_time.txt',
             },
             'streamlit_app.py': {
               url: './streamlit_app.py',

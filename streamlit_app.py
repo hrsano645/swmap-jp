@@ -31,6 +31,7 @@ with st.sidebar.expander("このサイトは？", expanded=True):
 
 # CSVファイルのパスを設定
 csv_path = Path("./startup_weekend_events.csv")
+last_run_time_path = Path("./last_run_time.txt")
 
 if csv_path.exists():
     try:
@@ -43,7 +44,16 @@ if csv_path.exists():
         data = load_data_from_file(csv_path)
 
         # イベントの見つかった件数を表示
-        st.markdown(f"見つかったイベントの件数: **{len(data)}件**")
+        st.info(f"見つかったイベントの件数: **{len(data)}件**")
+
+        if last_run_time_path.exists():
+            with open(last_run_time_path, "r") as file:
+                last_run_time = file.read().strip()
+                last_run_time = pd.to_datetime(last_run_time).tz_convert("Asia/Tokyo")
+                formatted_last_run_time = last_run_time.strftime("%Y-%m-%d %H:%M")
+                st.info(f"最終更新日: **{formatted_last_run_time}**")
+        else:
+            st.warning("最終更新が確認できませんでした")
 
         # デフォルトの列インデックスを設定
         lat_column = data.columns[3]  # 緯度列
