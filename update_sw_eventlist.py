@@ -26,9 +26,15 @@ events = response.json()
 # 必要な情報を抽出
 event_data = []
 for event in events:
+    # 開催日のUTC時間を日本時間に変換
+    starts_at_utc = datetime.fromisoformat(
+        event["event"]["starts_at"].replace("Z", "+00:00")
+    )
+    starts_at_jst = starts_at_utc.astimezone(ZoneInfo("Asia/Tokyo"))
+
     event_info = {
         "イベント名": event["event"]["title"],
-        "開催日": event["event"]["starts_at"],
+        "開催日": starts_at_jst.isoformat(),
         "開催場所": event["event"]["venue_name"],
         "緯度": event["event"]["lat"],
         "経度": event["event"]["long"],
