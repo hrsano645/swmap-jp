@@ -39,7 +39,7 @@ Pythonは3.11を推奨です（stliteを利用するため）
 
 ### イベント情報の更新
 
-`update_sw_eventlist.py`を実行することで、イベント情報を更新できます。
+`update_sw_eventlist.py`を実行することで、イベント情報を更新できます。`startup_weekend_events.csv`というイベント一覧ファイルと`last_run_time.txt`という最終更新日時ファイルが生成されます。
 
 * .envファイルを作成し、以下の環境変数を設定してください。
   * `DOORKEEPER_API_KEY`: Doorkeeper APIを利用する際のAPIキー (必須)
