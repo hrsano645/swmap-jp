@@ -6,7 +6,7 @@ from pathlib import Path
 
 st.set_page_config(layout="wide")
 
-st.title("[Beta]Startup Weekend Map")
+st.title("[beta]Startup Weekend Map for Japan")
 
 # サイドバーにアプリの概要を表示
 with st.sidebar.expander("このサイトは？", expanded=True):
