@@ -77,10 +77,13 @@ if csv_path.exists():
                 "%Y-%m-%d %H:%M"
             )
 
-            # インデックス番号をマーカーに追加
+            # マップ用のデータフレーム
             map_data = data.copy()
-            map_data["index"] = map_data.index.astype(str)  # インデックスを文字列に変換
-
+            # データ前処理
+            # Nanを削除: 緯度と経度が欠損している行を削除してマップには出さない
+            map_data = map_data.dropna(subset=[lat_column, lon_column])
+            # インデックスを文字列に変換
+            map_data["index"] = map_data.index.astype(str)
             # 日時の表示を日本国内向けに変更
             map_data[date_column] = pd.to_datetime(map_data[date_column]).dt.tz_convert(
                 "Asia/Tokyo"
