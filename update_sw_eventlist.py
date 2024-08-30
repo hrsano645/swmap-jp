@@ -36,10 +36,12 @@ for event in events:
     )
     starts_at_jst = starts_at_utc.astimezone(ZoneInfo("Asia/Tokyo"))
 
-    # 住所から都道府県を抽出
+    # 住所から都道府県を抽出。都道府県が見つからない場合は空文字列
+    prefecture = ""
     address = event["event"].get("address", "")
-    match = re.search(prefecture_pattern, address)
-    prefecture = match.group(0) if match else ""
+    if address:
+        match = re.search(prefecture_pattern, address)
+        prefecture = match.group(0).strip() if match else ""
 
     event_info = {
         "イベント名": event["event"]["title"],
