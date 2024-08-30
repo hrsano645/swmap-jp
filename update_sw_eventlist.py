@@ -1,9 +1,13 @@
 import os
+import re
 import httpx
 import pandas as pd
 from dotenv import load_dotenv
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+# 日本の都道府県をカバーする正規表現パターン
+prefecture_pattern = r"(東京都|北海道|京都府|大阪府|.{2,3}県)"
 
 # 環境変数の読み込み
 load_dotenv()
@@ -32,6 +36,13 @@ for event in events:
     )
     starts_at_jst = starts_at_utc.astimezone(ZoneInfo("Asia/Tokyo"))
 
+    # 住所から都道府県を抽出。都道府県が見つからない場合は空文字列
+    prefecture = ""
+    address = event["event"].get("address", "")
+    if address:
+        match = re.search(prefecture_pattern, address)
+        prefecture = match.group(0).strip() if match else ""
+
     event_info = {
         "イベント名": event["event"]["title"],
         "開催日": starts_at_jst.isoformat(),
@@ -39,6 +50,8 @@ for event in events:
         "緯度": event["event"]["lat"],
         "経度": event["event"]["long"],
         "イベントURL": event["event"]["public_url"],
+        "住所": address,
+        "都道府県": prefecture,
     }
     event_data.append(event_info)
 
