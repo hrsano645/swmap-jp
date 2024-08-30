@@ -43,6 +43,18 @@ if csv_path.exists():
 
         data = load_data_from_file(csv_path)
 
+        # 都道府県のセレクトボックスを追加
+        prefectures = data["都道府県"].dropna().unique().tolist()
+        selected_prefecture = st.selectbox(
+            "都道府県でフィルター", ["全て", "未分類"] + prefectures
+        )
+
+        # フィルタリングの適用
+        if selected_prefecture == "未分類":
+            data = data[data["都道府県"].isnull()]
+        elif selected_prefecture != "全て":
+            data = data[data["都道府県"] == selected_prefecture]
+
         # イベントの見つかった件数を表示
         st.info(f"見つかったイベントの件数: **{len(data)}件**")
 
