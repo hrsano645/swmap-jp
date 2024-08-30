@@ -45,7 +45,6 @@ if csv_path.exists():
 
         # 都道府県のセレクトボックスを追加
         prefectures = data["都道府県"].dropna().unique().tolist()
-        print(prefectures)
         selected_prefecture = st.selectbox(
             "都道府県でフィルター", ["全て", "未分類"] + prefectures
         )
