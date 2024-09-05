@@ -43,17 +43,37 @@ if csv_path.exists():
 
         data = load_data_from_file(csv_path)
 
-        # 都道府県のセレクトボックスを追加
+        # urlパラメーターを取得して、現時点のセレクトボックスを選択状態にする。prefectureがない場合は全てを選択状態にする
+        url_params = st.query_params
+        query_params_prefecture = "全て"
+        if "prefecture" in url_params:
+            query_params_prefecture = url_params["prefecture"]
+
+        # TODO: 2024-09-05 urlパラメーターの検査は、パラメーターが増えた場合に処理をまとめるといいと思う
+
+        # 都道府県のセレクトボックスを追加。urlパラメーターがあればそれを選択状態にする。urlパラメーターの値がセレクトボックスにない場合は全てを選択状態にする
         prefectures = data["都道府県"].dropna().unique().tolist()
+        selectlist_prefecture: list = ["全て", "未分類"] + prefectures
         selected_prefecture = st.selectbox(
-            "都道府県でフィルター", ["全て", "未分類"] + prefectures
+            "都道府県でフィルター",
+            selectlist_prefecture,
+            index=selectlist_prefecture.index(query_params_prefecture)
+            if query_params_prefecture in selectlist_prefecture
+            else 0,
         )
 
-        # フィルタリングの適用
+        # フィルタリングの適用、urlパラメーターも更新
         if selected_prefecture == "未分類":
             data = data[data["都道府県"].isnull()]
+            st.query_params["prefecture"] = "未分類"
+        # 都道府県が選択された場合
         elif selected_prefecture != "全て":
             data = data[data["都道府県"] == selected_prefecture]
+            st.query_params["prefecture"] = selected_prefecture
+        # 全ての場合はurlパラメーターを削除
+        else:
+            if "prefecture" in st.query_params:
+                del st.query_params["prefecture"]
 
         # イベントの見つかった件数を表示
         st.info(f"見つかったイベントの件数: **{len(data)}件**")
