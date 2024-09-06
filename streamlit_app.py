@@ -136,6 +136,12 @@ if csv_path.exists():
                 + '<a href="'
                 + map_data[url_column]
                 + '" target="_blank">イベントページ</a>'
+                + "<br>"
+                + "<a href='https://www.google.com/maps/search/?api=1&query="
+                + map_data[lat_column].astype(str)
+                + ","
+                + map_data[lon_column].astype(str)
+                + "' target='_blank'>Googleマップで開く</a>"
             )
 
             # Foliumマップを作成
