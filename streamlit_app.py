@@ -99,25 +99,21 @@ if csv_path.exists():
         url_column = data.columns[6]  # URL列
         event_type_column = data.columns[9]  # イベント種別列
 
+        # 日付列を日本向け表記変換
+        data[start_date_column] = pd.to_datetime(data[start_date_column]).dt.tz_convert(
+            "Asia/Tokyo"
+        )
+        data[start_date_column] = data[start_date_column].dt.strftime("%Y-%m-%d %H:%M")
+        data[end_date_column] = pd.to_datetime(data[end_date_column]).dt.tz_convert(
+            "Asia/Tokyo"
+        )
+        data[end_date_column] = data[end_date_column].dt.strftime("%Y-%m-%d %H:%M")
+
         if lat_column and lon_column:
             # イベント一覧用のデータフレーム
             event_data = data.copy()
             # 緯度と経度の列を削除
             event_data = event_data.drop(columns=[lat_column, lon_column])
-
-            # 日時の表示を日本国内向けに変更
-            event_data[start_date_column] = pd.to_datetime(
-                event_data[start_date_column]
-            ).dt.tz_convert("Asia/Tokyo")
-            event_data[start_date_column] = event_data[start_date_column].dt.strftime(
-                "%Y-%m-%d %H:%M"
-            )
-            event_data[end_date_column] = pd.to_datetime(
-                event_data[end_date_column]
-            ).dt.tz_convert("Asia/Tokyo")
-            event_data[end_date_column] = event_data[end_date_column].dt.strftime(
-                "%Y-%m-%d %H:%M"
-            )
 
             # マップ用のデータフレーム
             map_data = data.copy()
@@ -126,20 +122,6 @@ if csv_path.exists():
             map_data = map_data.dropna(subset=[lat_column, lon_column])
             # インデックスを文字列に変換
             map_data["index"] = map_data.index.astype(str)
-
-            # 日時の表示を日本国内向けに変更
-            map_data[start_date_column] = pd.to_datetime(
-                map_data[start_date_column]
-            ).dt.tz_convert("Asia/Tokyo")
-            map_data[start_date_column] = map_data[start_date_column].dt.strftime(
-                "%Y-%m-%d %H:%M"
-            )
-            map_data[end_date_column] = pd.to_datetime(
-                map_data[end_date_column]
-            ).dt.tz_convert("Asia/Tokyo")
-            map_data[end_date_column] = map_data[end_date_column].dt.strftime(
-                "%Y-%m-%d %H:%M"
-            )
 
             # 詳細情報を含むカラムを作成
             map_data["info"] = (
