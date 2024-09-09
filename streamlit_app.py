@@ -43,7 +43,9 @@ if csv_path.exists():
 
         data = load_data_from_file(csv_path)
 
-        # urlパラメーターを取得して、現時点のセレクトボックスを選択状態にする。prefectureがない場合は全てを選択状態にする
+        # urlパラメーターを取得して、表示種類を選択する
+
+        # 現時点のセレクトボックスを選択状態にする。prefectureがない場合は全てを選択状態にする
         url_params = st.query_params
         query_params_prefecture = "全て"
         if "prefecture" in url_params:
@@ -88,12 +90,14 @@ if csv_path.exists():
             st.warning("最終更新が確認できませんでした")
 
         # デフォルトの列インデックスを設定
-        lat_column = data.columns[3]  # 緯度列
-        lon_column = data.columns[4]  # 経度列
+        lat_column = data.columns[4]  # 緯度列
+        lon_column = data.columns[5]  # 経度列
         event_name_column = data.columns[0]  # イベント名列
-        date_column = data.columns[1]  # 開催日時列
-        place_column = data.columns[2]  # 開催場所列
-        url_column = data.columns[5]  # URL列
+        start_date_column = data.columns[1]  # 開催日時列
+        end_date_column = data.columns[2]  # 終了日時列
+        place_column = data.columns[3]  # 開催場所列
+        url_column = data.columns[6]  # URL列
+        event_type_column = data.columns[9]  # イベント種別列
 
         if lat_column and lon_column:
             # イベント一覧用のデータフレーム
@@ -102,10 +106,16 @@ if csv_path.exists():
             event_data = event_data.drop(columns=[lat_column, lon_column])
 
             # 日時の表示を日本国内向けに変更
-            event_data[date_column] = pd.to_datetime(
-                event_data[date_column]
+            event_data[start_date_column] = pd.to_datetime(
+                event_data[start_date_column]
             ).dt.tz_convert("Asia/Tokyo")
-            event_data[date_column] = event_data[date_column].dt.strftime(
+            event_data[start_date_column] = event_data[start_date_column].dt.strftime(
+                "%Y-%m-%d %H:%M"
+            )
+            event_data[end_date_column] = pd.to_datetime(
+                event_data[end_date_column]
+            ).dt.tz_convert("Asia/Tokyo")
+            event_data[end_date_column] = event_data[end_date_column].dt.strftime(
                 "%Y-%m-%d %H:%M"
             )
 
@@ -116,19 +126,33 @@ if csv_path.exists():
             map_data = map_data.dropna(subset=[lat_column, lon_column])
             # インデックスを文字列に変換
             map_data["index"] = map_data.index.astype(str)
+
             # 日時の表示を日本国内向けに変更
-            map_data[date_column] = pd.to_datetime(map_data[date_column]).dt.tz_convert(
-                "Asia/Tokyo"
+            map_data[start_date_column] = pd.to_datetime(
+                map_data[start_date_column]
+            ).dt.tz_convert("Asia/Tokyo")
+            map_data[start_date_column] = map_data[start_date_column].dt.strftime(
+                "%Y-%m-%d %H:%M"
             )
-            map_data[date_column] = map_data[date_column].dt.strftime("%Y-%m-%d %H:%M")
+            map_data[end_date_column] = pd.to_datetime(
+                map_data[end_date_column]
+            ).dt.tz_convert("Asia/Tokyo")
+            map_data[end_date_column] = map_data[end_date_column].dt.strftime(
+                "%Y-%m-%d %H:%M"
+            )
 
             # 詳細情報を含むカラムを作成
             map_data["info"] = (
                 "イベント名: "
                 + map_data[event_name_column]
                 + "<br>"
+                + "イベント種別: "
+                + map_data[event_type_column]
+                + "<br>"
                 + "開催日時: "
-                + map_data[date_column]
+                + map_data[start_date_column]
+                + " ~ "
+                + map_data[end_date_column]
                 + "<br>"
                 + "開催場所: "
                 + map_data[place_column]
