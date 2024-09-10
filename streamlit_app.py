@@ -191,7 +191,7 @@ if csv_path.exists():
             for i, row in map_data.iterrows():
                 folium.Marker(
                     location=[row[lat_column], row[lon_column]],
-                    popup=folium.Popup(row["info"], max_width=600),
+                    popup=folium.Popup(row["info"], max_width=360),
                     icon=folium.Icon(color="gray", icon="info-sign"),
                 ).add_to(m)
 
