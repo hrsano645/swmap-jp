@@ -8,13 +8,6 @@ from pathlib import Path
 csv_path = Path("./startup_weekend_events.csv")
 last_run_time_path = Path("./last_run_time.txt")
 
-
-@st.cache_data
-def load_data_from_file(path):
-    data = pd.read_csv(path)
-    return data
-
-
 st.set_page_config(layout="wide")
 
 st.title("[beta]Startup Weekend Map for Japan")
@@ -51,6 +44,12 @@ with st.sidebar.expander("このサイトは？", expanded=True):
 
 if csv_path.exists():
     try:
+
+        @st.cache_data
+        def load_data_from_file(path):
+            data = pd.read_csv(path)
+            return data
+
         data = load_data_from_file(csv_path)
 
         # urlパラメーターを取得して、表示種類を選択する
