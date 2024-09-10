@@ -44,38 +44,70 @@ if csv_path.exists():
         data = load_data_from_file(csv_path)
 
         # urlパラメーターを取得して、表示種類を選択する
-
-        # 現時点のセレクトボックスを選択状態にする。prefectureがない場合は全てを選択状態にする
         url_params = st.query_params
+
+        # 選択済みの都道府県を取得
         query_params_prefecture = "全て"
         if "prefecture" in url_params:
             query_params_prefecture = url_params["prefecture"]
-
-        # TODO: 2024-09-05 urlパラメーターの検査は、パラメーターが増えた場合に処理をまとめるといいと思う
-
-        # 都道府県のセレクトボックスを追加。urlパラメーターがあればそれを選択状態にする。urlパラメーターの値がセレクトボックスにない場合は全てを選択状態にする
         prefectures = data["都道府県"].dropna().unique().tolist()
         selectlist_prefecture: list = ["全て", "未分類"] + prefectures
-        selected_prefecture = st.selectbox(
-            "都道府県でフィルター",
-            selectlist_prefecture,
-            index=selectlist_prefecture.index(query_params_prefecture)
-            if query_params_prefecture in selectlist_prefecture
-            else 0,
-        )
+
+        # 選択済みのイベント種別を取得
+        query_params_event_type = "全て"
+        if "event_type" in url_params:
+            query_params_event_type = url_params["event_type"]
+        event_types = data["イベント種別"].dropna().unique().tolist()
+        selectlist_event_type: list = ["全て"] + event_types
+
+        # 横並びにするためのカラムを作成
+        col1, col2 = st.columns(2)
+
+        with col1:
+            selected_prefecture = st.selectbox(
+                "都道府県",
+                selectlist_prefecture,
+                index=selectlist_prefecture.index(query_params_prefecture)
+                if query_params_prefecture in selectlist_prefecture
+                else 0,
+            )
+
+        with col2:
+            selected_event_type = st.selectbox(
+                "イベント種別",
+                selectlist_event_type,
+                index=selectlist_event_type.index(query_params_event_type)
+                if query_params_event_type in selectlist_event_type
+                else 0,
+            )
 
         # フィルタリングの適用、urlパラメーターも更新
+        # 都道府県が選択された場合
         if selected_prefecture == "未分類":
             data = data[data["都道府県"].isnull()]
             st.query_params["prefecture"] = "未分類"
-        # 都道府県が選択された場合
         elif selected_prefecture != "全て":
             data = data[data["都道府県"] == selected_prefecture]
             st.query_params["prefecture"] = selected_prefecture
-        # 全ての場合はurlパラメーターを削除
         else:
+            # 都道府県が全ての場合はパラメーターを削除
             if "prefecture" in st.query_params:
                 del st.query_params["prefecture"]
+        # イベント種別が選択された場合
+        if selected_event_type != "全て":
+            data = data[data["イベント種別"] == selected_event_type]
+            st.query_params["event_type"] = selected_event_type
+        else:
+            # イベント種別が全ての場合はパラメーターを削除
+            if "event_type" in st.query_params:
+                del st.query_params["event_type"]
+
+        # イベントの数が0の場合はメッセージを表示
+        if len(data) == 0:
+            st.warning(
+                "該当するイベントが見つかりませんでした。条件を変更してください。"
+            )
+            st.stop()
 
         # イベントの見つかった件数を表示
         st.info(f"見つかったイベントの件数: **{len(data)}件**")
