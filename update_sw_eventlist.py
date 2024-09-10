@@ -27,14 +27,20 @@ response.raise_for_status()  # ステータスコードがエラーの場合、�
 # JSONデータを解析
 events = response.json()
 
+
+def convert_to_jst(utc_time: str) -> str:
+    """UTC時間を日本時間に変換する"""
+    utc = datetime.fromisoformat(utc_time.replace("Z", "+00:00"))
+    jst = utc.astimezone(ZoneInfo("Asia/Tokyo"))
+    return jst.isoformat()
+
+
 # 必要な情報を抽出
 event_data = []
 for event in events:
-    # 開催日のUTC時間を日本時間に変換
-    starts_at_utc = datetime.fromisoformat(
-        event["event"]["starts_at"].replace("Z", "+00:00")
-    )
-    starts_at_jst = starts_at_utc.astimezone(ZoneInfo("Asia/Tokyo"))
+    # 開催日、終了日のUTC時間を日本時間に変換
+    starts_at_jst = convert_to_jst(event["event"]["starts_at"])
+    ends_at_jst = convert_to_jst(event["event"]["ends_at"])
 
     # 住所から都道府県を抽出。都道府県が見つからない場合は空文字列
     prefecture = ""
@@ -43,15 +49,24 @@ for event in events:
         match = re.search(prefecture_pattern, address)
         prefecture = match.group(0).strip() if match else ""
 
+    # 開催日と終了日の長さで本イベントかプレイベントかを判定
+    # 本イベントは 2 日間以上、プレイベントは 1 日のイベント
+    event_length = (
+        datetime.fromisoformat(ends_at_jst) - datetime.fromisoformat(starts_at_jst)
+    ).days
+    event_type = "本イベント" if event_length >= 2 else "プレイベント"
+
     event_info = {
         "イベント名": event["event"]["title"],
-        "開催日": starts_at_jst.isoformat(),
+        "開催日": starts_at_jst,
+        "終了日": ends_at_jst,
         "開催場所": event["event"]["venue_name"],
         "緯度": event["event"]["lat"],
         "経度": event["event"]["long"],
         "イベントURL": event["event"]["public_url"],
         "住所": address,
         "都道府県": prefecture,
+        "イベント種別": event_type,
     }
     event_data.append(event_info)
 
