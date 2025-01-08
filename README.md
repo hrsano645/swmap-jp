@@ -39,6 +39,14 @@ Pythonは3.11を推奨です（stliteを利用するため）
 
 ### イベント情報の更新
 
+<!-- TODO: 2025-01-08 ここはGoogle Sheetの更新、読み込みを行うことを明示的にする 
+cronで動かす場合の方法をメモる
+# crontabに以下を追加
+# 毎日午前3時に実行する例
+0 3 * * * docker build -t swmap-jp-update-eventlist /home/hiro/swmap-jp && docker run --rm swmap-jp-update-eventlist
+イメージ名はswmap-jp-update-eventlistとしています。
+-->
+
 `update_sw_eventlist.py`を実行することで、イベント情報を更新できます。`startup_weekend_events.csv`というイベント一覧ファイルと`last_run_time.txt`という最終更新日時ファイルが生成されます。
 
 * .envファイルを作成し、以下の環境変数を設定してください。

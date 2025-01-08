@@ -1,22 +1,35 @@
 import os
 import re
-import httpx
-import pandas as pd
-from dotenv import load_dotenv
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-
-# TODO: 2025-01-08 こちらはgoogle sheetで保存するような仕組みに置き換えて、GitHub以外での実行とする
+import gspread
+import httpx
+import pandas as pd
+from dotenv import load_dotenv
 
 # 日本の都道府県をカバーする正規表現パターン
 prefecture_pattern = r"(東京都|北海道|京都府|大阪府|.{2,3}県)"
+
 
 # 環境変数の読み込み
 load_dotenv()
 API_KEY = os.getenv("DOORKEEPER_API_KEY")
 if API_KEY is None:
     raise ValueError("環境変数 DOORKEEPER_API_KEY が設定されていません")
+
+# gsheetのIDとGIDを設定。環境変数から読み込み
+GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
+GOOGLE_SHEET_DATA_GID = os.getenv("GOOGLE_SHEET_DATA_GID")
+GOOGLE_SHEET_LAST_RUN_TIME_GID = os.getenv("GOOGLE_SHEET_LAST_RUN_TIME_GID")
+if (
+    GOOGLE_SHEET_ID is None
+    or GOOGLE_SHEET_DATA_GID is None
+    or GOOGLE_SHEET_LAST_RUN_TIME_GID is None
+):
+    raise ValueError(
+        "環境変数 GOOGLE_SHEET_ID または GOOGLE_SHEET_DATA_GID または GOOGLE_SHEET_LAST_RUN_TIME_GID が設定されていません"
+    )
 
 # APIのエンドポイントとパラメータ
 API_URL = "https://api.doorkeeper.jp/events"
@@ -76,16 +89,33 @@ for event in events:
 # DataFrameに変換
 df = pd.DataFrame(event_data)
 
-# CSVファイルに保存
-csv_file = "startup_weekend_events.csv"
-df.to_csv(csv_file, index=False, encoding="utf-8-sig")
+# NaNを空文字列に置き換える前に、データ型を明示的に設定
+df = df.astype(str)  # すべての列を文字列型に変換
+df.fillna("", inplace=True)  # ここでNaNを空文字列に置き換え
 
-# 実行日時を記録する
-now = datetime.now(ZoneInfo("Asia/Tokyo"))
-last_run_time_file = "last_run_time.txt"
+# スプレッドシートに保存
+# Google Sheets APIの認証
+gc = gspread.service_account(filename="service_account.json")
+spreadsheet = gc.open_by_key(GOOGLE_SHEET_ID)
+data_worksheet = spreadsheet.get_worksheet_by_id(int(GOOGLE_SHEET_DATA_GID))
 
-with open(last_run_time_file, "w", encoding="utf-8") as f:
-    f.write(now.isoformat())
+# DataFrameをリストに変換してスプレッドシートに書き込み
+data_worksheet.clear()  # 既存のデータをクリア
+data_worksheet.update([df.columns.values.tolist()] + df.values.tolist())
 
-print(f"イベント情報を {csv_file} に保存しました")
-print(f"実行日時を {last_run_time_file} に保存しました")
+# 実行時刻を記録する
+last_run_time_jst = convert_to_jst(datetime.now().isoformat())
+
+# 実行日時をスプレッドシートに書き込み
+last_run_time_worksheet = spreadsheet.get_worksheet_by_id(
+    int(GOOGLE_SHEET_LAST_RUN_TIME_GID)
+)
+last_run_time_worksheet.clear()  # 既存のデータをクリア
+
+# worksheet.update() メソッドの引数の順序を修正
+last_run_time_worksheet.update(
+    values=[[last_run_time_jst]], range_name="A1"
+)  # A1セルに日本時間を記入
+
+print(f"イベント情報を {GOOGLE_SHEET_ID=} {GOOGLE_SHEET_DATA_GID=} に保存しました")
+print(f"実行日時を {GOOGLE_SHEET_ID=} {GOOGLE_SHEET_LAST_RUN_TIME_GID=} に保存しました")

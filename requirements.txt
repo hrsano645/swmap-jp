@@ -3,3 +3,4 @@ httpx
 streamlit
 streamlit-folium
 pandas
+gspread

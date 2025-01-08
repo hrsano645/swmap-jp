@@ -162,3 +162,4 @@ cython_debug/
 #.idea/
 last_run_time.txt
 startup_weekend_events.csv
+service_account.json
