@@ -4,6 +4,7 @@ import folium
 from streamlit_folium import st_folium
 from pathlib import Path
 
+
 # CSVファイルのパスを設定
 csv_path = Path("./startup_weekend_events.csv")
 last_run_time_path = Path("./last_run_time.txt")

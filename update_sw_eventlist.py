@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+
+# TODO: 2025-01-08 こちらはgoogle sheetで保存するような仕組みに置き換えて、GitHub以外での実行とする
+
 # 日本の都道府県をカバーする正規表現パターン
 prefecture_pattern = r"(東京都|北海道|京都府|大阪府|.{2,3}県)"
 
