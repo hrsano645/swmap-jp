@@ -22,6 +22,8 @@ jobs:
           mkdir public
           cp index.html public/
           cp streamlit_app.py public/
+          cp ogimage.png public/
+          cp -r assets public/
       - name: Deploy to GitHub Pages
         uses: actions/upload-pages-artifact@v1
         with:

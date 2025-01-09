@@ -7,26 +7,26 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <meta property="og:title" content="[beta]Startup Weekend Map for Japan" />
+    <meta property="og:title" content="Startup Weekend Map for Japan" />
     <meta
       property="og:description"
       content="Doorkeeperに公開されているStartup Weekendのイベント情報をマップから確認できます。"
     />
-    <!-- <meta
-      property="og:image"
-      content="https://hrsano645.github.io/swmap-jp/ogpimg.png"
-    /> -->
-    <meta property="og:url" content="https://hrsano645.github.io/swmap-jp/" />
     <meta
-      property="og:site_name"
-      content="[beta]Startup Weekend Map for Japan"
+      property="og:image"
+      content="https://hrsano645.github.io/swmap-jp/ogimage.png"
     />
+    <meta property="og:url" content="https://hrsano645.github.io/swmap-jp/" />
+    <meta property="og:site_name" content="Startup Weekend Map for Japan" />
     <meta property="og:type" content="website" />
-    <title>[beta]Startup Weekend Map for Japan</title>
+    <title>Startup Weekend Map for Japan</title>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.73.0/build/stlite.min.css"
     />
+    <link rel="icon" href="assets/icons/favicon.ico" type="image/x-icon" />
+    <link rel="manifest" href="assets/icons/site.webmanifest" />
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
   </head>
   <body>
     <div id="root"></div>
@@ -53,7 +53,7 @@
           },
           streamlitConfig: {
             // Streamlit configuration
-            'client.toolbarMode': 'viewer',
+            'client.toolbarMode': 'minimal',
           },
         },
         document.getElementById('root')

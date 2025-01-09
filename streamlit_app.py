@@ -9,7 +9,10 @@ from pathlib import Path
 csv_path = Path("./startup_weekend_events.csv")
 last_run_time_path = Path("./last_run_time.txt")
 
-st.set_page_config(layout="wide")
+st.set_page_config(
+    layout="wide",
+    page_title="Startup Weekend Map for Japan",
+)
 
 st.title("[beta]Startup Weekend Map for Japan")
 
@@ -25,7 +28,7 @@ with st.sidebar.expander("このサイトは？", expanded=True):
         
         ### 注意事項
 
-        * Doorkeeper APIを使い、１日に２回程度情報の更新をします。公開イベントのみを収集しています。
+        * Doorkeeper APIを使い、１日に1回程度情報の更新をします。公開イベントのみを収集しています。
         * Startup Weekend オーガナイザーの個人プロジェクトです。不備がありましたら以下の連絡先までお知らせください。
 
         ### 作成者
