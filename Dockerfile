@@ -1,7 +1,7 @@
 # update_sw_eventlist.pyを実行する。Python3.12でビルドをした上でスクリプトの実行。
 
 # ビルドステージ
-FROM python:3.12-slim as builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 COPY requirements.txt .
