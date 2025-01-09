@@ -3,10 +3,6 @@ on:
   push:
     branches:
       - main
-  schedule:
-    - cron: '0 6 * * *'
-    - cron: '0 18 * * *'
-  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,16 +17,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Run update_sw_eventlist.py
-        env:
-          DOORKEEPER_API_KEY: ${{ secrets.DOORKEEPER_API_KEY }}
-        run: python update_sw_eventlist.py
       - name: Clean up files
         run: |
           mkdir public
           cp index.html public/
-          cp startup_weekend_events.csv public/
-          cp last_run_time.txt public/
           cp streamlit_app.py public/
       - name: Deploy to GitHub Pages
         uses: actions/upload-pages-artifact@v1

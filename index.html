@@ -32,16 +32,20 @@
     <div id="root"></div>
     <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.65.0/build/stlite.min.js"></script>
     <script>
+      // 設定：参照先のGoogleスプレッドシートIDとそれぞれGID
+      let sheet_id = '1aImknpImJYyDBYcBAbwA0WIck4hmoH1rorRjJftjlj8'
+      let sheet_data_gid = '3428216'
+      let sheet_last_run_time_gid = '1765691497'
       stlite.mount(
         {
           requirements: ['pandas', 'streamlit-folium'], // Packages to install
           entrypoint: 'streamlit_app.py', // The target file of the `streamlit run` command
           files: {
             'startup_weekend_events.csv': {
-              url: './startup_weekend_events.csv',
+              url: `https://docs.google.com/spreadsheets/d/${sheet_id}/export?format=csv&gid=${sheet_data_gid}`,
             },
             'last_run_time.txt': {
-              url: './last_run_time.txt',
+              url: `https://docs.google.com/spreadsheets/d/${sheet_id}/export?format=csv&gid=${sheet_last_run_time_gid}`,
             },
             'streamlit_app.py': {
               url: './streamlit_app.py',
