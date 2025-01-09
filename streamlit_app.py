@@ -28,7 +28,7 @@ with st.sidebar.expander("このサイトは？", expanded=True):
         
         ### 注意事項
 
-        * Doorkeeper APIを使い、１日に２回程度情報の更新をします。公開イベントのみを収集しています。
+        * Doorkeeper APIを使い、１日に1回程度情報の更新をします。公開イベントのみを収集しています。
         * Startup Weekend オーガナイザーの個人プロジェクトです。不備がありましたら以下の連絡先までお知らせください。
 
         ### 作成者
