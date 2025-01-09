@@ -91,7 +91,7 @@ let sheet_last_run_time_gid = '[GOOGLE_SHEET_LAST_RUN_TIME_GID]'
 
 `update_sw_eventlist.py`を実行することで、イベント一覧の更新が行われます。
 
-Dockerfileでも実行可能です。crontabを使いDockerfileで実行する際は、以下のようにしてください。
+Dockerfileでも実行可能です。crontabを使いDockerfileで実行する際は、以下のようにしてください。Dockerfileのイメージ名は`swmap-jp-update-eventlist`としていますが自由に変更可能です。
 
 ```bash
 # crontabに以下を追加
