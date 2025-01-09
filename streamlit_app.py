@@ -11,7 +11,7 @@ last_run_time_path = Path("./last_run_time.txt")
 
 st.set_page_config(
     layout="wide",
-    page_title="[beta]Startup Weekend Map for Japan",
+    page_title="Startup Weekend Map for Japan",
 )
 
 st.title("[beta]Startup Weekend Map for Japan")
