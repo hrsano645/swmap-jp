@@ -22,14 +22,14 @@ with st.sidebar.expander("このサイトは？", expanded=True):
         """
         Startup Weekendのイベント情報と開催地をマップで表示します。
 
-        ソースコードはGitHubにて公開しています。修正提案は歓迎しています。
+        ソースコードはGitHubにて公開しています。修正提案は歓迎しています。issueからお気軽にお知らせください。
 
         → [GitHub](https://github.com/hrsano645/swmap-jp)
         
         ### 注意事項
 
-        * Doorkeeper APIを使い、１日に1回程度情報の更新をします。公開イベントのみを収集しています。
-        * Startup Weekend オーガナイザーの個人プロジェクトです。不備がありましたら以下の連絡先までお知らせください。
+        * Peatixのイベント情報を収集し、一覧を作成しています。一部Doorkeeperでの公開イベントも収集しています。
+        * このサービスはStartup Weekend オーガナイザーの個人プロジェクトです。不備などがありましたら以下の連絡先までお知らせください。
 
         ### 作成者
 
@@ -59,61 +59,63 @@ if csv_path.exists():
         # urlパラメーターを取得して、表示種類を選択する
         url_params = st.query_params
 
-        # 選択済みの都道府県を取得
-        query_params_prefecture = "全て"
-        if "prefecture" in url_params:
-            query_params_prefecture = url_params["prefecture"]
-        prefectures = data["都道府県"].dropna().unique().tolist()
-        selectlist_prefecture: list = ["全て", "未分類"] + prefectures
+        # 選択済みの主催者を取得
+        query_params_organizer = "全て"
+        if "organizer" in url_params:
+            query_params_organizer = url_params["organizer"]
+        organizers = data["主催者"].dropna().unique().tolist()
+        selectlist_organizer: list = ["全て"] + organizers
 
-        # 選択済みのイベント種別を取得
-        query_params_event_type = "全て"
-        if "event_type" in url_params:
-            query_params_event_type = url_params["event_type"]
-        event_types = data["イベント種別"].dropna().unique().tolist()
-        selectlist_event_type: list = ["全て"] + event_types
+        # 選択済みの開催形式を取得
+        query_params_format = "全て"
+        if "format" in url_params:
+            query_params_format = url_params["format"]
+        selectlist_format: list = ["全て", "オンライン", "物理開催"]
 
         # 横並びにするためのカラムを作成
         col1, col2 = st.columns(2)
 
         with col1:
-            selected_prefecture = st.selectbox(
-                "都道府県",
-                selectlist_prefecture,
-                index=selectlist_prefecture.index(query_params_prefecture)
-                if query_params_prefecture in selectlist_prefecture
+            selected_organizer = st.selectbox(
+                "主催者",
+                selectlist_organizer,
+                index=selectlist_organizer.index(query_params_organizer)
+                if query_params_organizer in selectlist_organizer
                 else 0,
             )
 
         with col2:
-            selected_event_type = st.selectbox(
-                "イベント種別",
-                selectlist_event_type,
-                index=selectlist_event_type.index(query_params_event_type)
-                if query_params_event_type in selectlist_event_type
+            selected_format = st.selectbox(
+                "開催形式",
+                selectlist_format,
+                index=selectlist_format.index(query_params_format)
+                if query_params_format in selectlist_format
                 else 0,
             )
 
         # フィルタリングの適用、urlパラメーターも更新
-        # 都道府県が選択された場合
-        if selected_prefecture == "未分類":
-            data = data[data["都道府県"].isnull()]
-            st.query_params["prefecture"] = "未分類"
-        elif selected_prefecture != "全て":
-            data = data[data["都道府県"] == selected_prefecture]
-            st.query_params["prefecture"] = selected_prefecture
+        # 主催者が選択された場合
+        if selected_organizer != "全て":
+            data = data[data["主催者"] == selected_organizer]
+            st.query_params["organizer"] = selected_organizer
         else:
-            # 都道府県が全ての場合はパラメーターを削除
-            if "prefecture" in st.query_params:
-                del st.query_params["prefecture"]
-        # イベント種別が選択された場合
-        if selected_event_type != "全て":
-            data = data[data["イベント種別"] == selected_event_type]
-            st.query_params["event_type"] = selected_event_type
+            # 主催者が全ての場合はパラメーターを削除
+            if "organizer" in st.query_params:
+                del st.query_params["organizer"]
+
+        # 開催形式が選択された場合
+        if selected_format == "オンライン":
+            # 住所が空の場合をオンラインと判定
+            data = data[data["住所"].fillna("").str.strip() == ""]
+            st.query_params["format"] = "オンライン"
+        elif selected_format == "物理開催":
+            # 住所がある場合を物理開催と判定
+            data = data[data["住所"].fillna("").str.strip() != ""]
+            st.query_params["format"] = "物理開催"
         else:
-            # イベント種別が全ての場合はパラメーターを削除
-            if "event_type" in st.query_params:
-                del st.query_params["event_type"]
+            # 開催形式が全ての場合はパラメーターを削除
+            if "format" in st.query_params:
+                del st.query_params["format"]
 
         # イベントの数が0の場合はメッセージを表示
         if len(data) == 0:
@@ -133,7 +135,8 @@ if csv_path.exists():
         end_date_column = data.columns[2]  # 終了日時列
         place_column = data.columns[3]  # 開催場所列
         url_column = data.columns[6]  # URL列
-        event_type_column = data.columns[9]  # イベント種別列
+        address_column = data.columns[7]  # 住所列
+        organizer_column = data.columns[8]  # 主催者列
 
         # 日付列を日本向け表記変換
         data[start_date_column] = pd.to_datetime(data[start_date_column]).dt.tz_convert(
@@ -164,8 +167,8 @@ if csv_path.exists():
                 "イベント名: "
                 + map_data[event_name_column]
                 + "<br>"
-                + "イベント種別: "
-                + map_data[event_type_column]
+                + "主催者: "
+                + map_data[organizer_column]
                 + "<br>"
                 + "開催日時: "
                 + map_data[start_date_column]

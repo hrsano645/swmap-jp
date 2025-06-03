@@ -10,19 +10,19 @@
 
 [Startup Weekend Map in Japan](https://hrsano645.github.io/swmap-jp/)
 
-<!-- <TODO: 2024-07-30 表示されるサイトの画像を入れる> -->
 ![swmap-jp screenshot](./app_screenshot.png)
 
-* イベント一覧には、イベント名、開催日時、開催場所、URLが表示されます。
-* マップには上記情報が表示され、イベントページのリンクがあります。
+* イベント一覧には、イベント名、開催日時、開催場所、主催者、URLが表示されます。
+* マップには上記情報が表示され、イベントページのリンクやGoogleマップへのリンクがあります。
+* 主催者や開催形式（オンライン/物理開催）でフィルタリングできます。
 
 ## 今後やりたいこと
 
-* 地域選択で絞る機能の実装
 * SWのコミュニティ情報も載せる（コミュニティの紹介文とか）
 
 ## コントリビュート
 
+* issueから問題などお知らせください。
 * このリポジトリをforkして、プルリクエストを送ってください。
 
 ## 開発環境
@@ -37,11 +37,13 @@ Pythonは3.11を推奨です（stliteを利用するため）
 * pythonのvenvを作成し、activateします。
 * `pip install -r requirements.txt`で必要なライブラリをインストールします。
 
-### イベント一覧の更新方法
+## イベント一覧の更新方法
 
 `update_sw_eventlist.py`を実行することで、イベント情報を更新できます。Googleスプレッドシート + Google Sheet APIを利用します。
 
-#### Googleスプレッドシートの準備
+Dockerfileを元に、コンテナ経由で更新スクリプトを動かすことも可能です。
+
+### Googleスプレッドシートの準備
 
 Googleスプレッドシートの用意を行い、Google_Sheet_IDを取得してください。URLは`https://docs.google.com/spreadsheets/d/[sheet_id]/edit`のようになっています。
 
@@ -60,7 +62,7 @@ Googleスプレッドシート内に最低２つのシートを作成してく�
 
 例：`https://docs.google.com/spreadsheets/d/[sheet_id]/edit#gid=[gid]`
 
-#### 環境準備
+### 環境準備
 
 `.env`ファイルに以下の環境変数を設定してください。
 
@@ -87,7 +89,7 @@ let sheet_data_gid = '[GOOGLE_SHEET_DATA_GID]'
 let sheet_last_run_time_gid = '[GOOGLE_SHEET_LAST_RUN_TIME_GID]'
 ```
 
-#### イベント一覧の更新処理
+## イベント一覧の更新処理
 
 `update_sw_eventlist.py`を実行することで、イベント一覧の更新が行われます。
 
@@ -99,9 +101,8 @@ Dockerfileでも実行可能です。crontabを使いDockerfileで実行する�
 0 3 * * * docker build -t swmap-jp-update-eventlist /[swmap-jpのディレクトリ]/ && docker run --rm swmap-jp-update-eventlist
 ```
 
-### アプリケーションの起動
+## アプリケーションの起動
 
-* Streamlit: `streamlit run streamlit_app.py`でアプリケーションを起動します。
 * stlite: `python -m http.server` でローカルサーバーを立ち上げ、ブラウザで `http://localhost:8000/` にアクセスすると確認できます。
 
 ## ライセンス

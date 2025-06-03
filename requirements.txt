@@ -4,3 +4,6 @@ streamlit
 streamlit-folium
 pandas
 gspread
+selenium
+webdriver-manager
+beautifulsoup4
