@@ -5,14 +5,13 @@ DoorkeeperとPeatixからStartup Weekendイベント情報を収集し、Google 
 
 import os
 import re
-import json
 import httpx
 import pandas as pd
 import gspread
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 from urllib.parse import urljoin, quote_plus, urlparse, urlunparse
 
 from selenium import webdriver
@@ -206,6 +205,9 @@ class StartupWeekendEventCollector:
                 if self._is_startup_weekend_related(
                     event_title, event_description, organizer_name
                 ):
+                    # イベント種類を判定
+                    event_type = self._determine_event_type(start_date, end_date)
+
                     event_info = {
                         "イベント名": event_title,
                         "開催日": start_date,
@@ -216,6 +218,7 @@ class StartupWeekendEventCollector:
                         "イベントURL": event.get("public_url", ""),
                         "住所": address,
                         "主催者": organizer_name,
+                        "イベント種類": event_type,
                     }
 
                     doorkeeper_events.append(event_info)
@@ -484,15 +487,21 @@ class StartupWeekendEventCollector:
                 "オンライン",
                 "xxxonlineeventxxx",
             ]:
-                event_type = "オンライン"
+                # オンラインイベント
                 location = ""  # Doorkeeperに合わせて空文字列
                 address = ""  # Doorkeeperに合わせて空文字列
                 latitude = ""  # オンラインの場合は緯度経度も空文字列
                 longitude = ""  # オンラインの場合は緯度経度も空文字列
             else:
-                event_type = "物理開催"
+                # 物理開催イベント
                 location = venue_name
                 address = venue_address
+
+            # イベント種類を判定
+            event_type_category = self._determine_event_type(
+                self._format_datetime(start_datetime),
+                self._format_datetime(end_datetime),
+            )
 
             return {
                 "イベント名": event_name,
@@ -504,6 +513,7 @@ class StartupWeekendEventCollector:
                 "イベントURL": self.clean_url(event_url),
                 "住所": address,
                 "主催者": organizer_name,
+                "イベント種類": event_type_category,
             }, "success"
 
         except Exception as e:
@@ -595,6 +605,7 @@ class StartupWeekendEventCollector:
                 "イベントURL": self.clean_url(event_url),
                 "住所": "",
                 "主催者": "",
+                "イベント種類": "本イベント",  # デフォルト値
             }
 
         except Exception as e:
@@ -754,6 +765,23 @@ class StartupWeekendEventCollector:
             print(f"⏱️ 実行完了時間の記録を行いました 実行完了時間: {last_run_time_jst}")
         except Exception as e:
             print(f"❌ Google Sheetsへの保存でエラーが発生しました: {e}")
+
+    def _determine_event_type(self, start_date: str, end_date: str) -> str:
+        """開催日時からイベント種類を判定"""
+        try:
+            if not start_date or not end_date:
+                return "本イベント"  # デフォルト
+
+            # 日付部分のみを比較
+            start_date_only = start_date[:10]  # YYYY-MM-DD
+            end_date_only = end_date[:10]  # YYYY-MM-DD
+
+            if start_date_only == end_date_only:
+                return "プレイベント"  # 同日開催
+            else:
+                return "本イベント"  # 複数日開催
+        except Exception:
+            return "本イベント"  # エラー時はデフォルト
 
     def collect_all_events(self):
         """全イベント収集の実行"""

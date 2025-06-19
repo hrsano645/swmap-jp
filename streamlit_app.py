@@ -66,11 +66,11 @@ if csv_path.exists():
         organizers = data["主催者"].dropna().unique().tolist()
         selectlist_organizer: list = ["全て"] + organizers
 
-        # 選択済みの開催形式を取得
-        query_params_format = "全て"
-        if "format" in url_params:
-            query_params_format = url_params["format"]
-        selectlist_format: list = ["全て", "オンライン", "物理開催"]
+        # 選択済みのイベント種類を取得
+        query_params_event_type = "全て"
+        if "event_type" in url_params:
+            query_params_event_type = url_params["event_type"]
+        selectlist_event_type: list = ["全て", "本イベント", "プレイベント"]
 
         # 横並びにするためのカラムを作成
         col1, col2 = st.columns(2)
@@ -85,11 +85,11 @@ if csv_path.exists():
             )
 
         with col2:
-            selected_format = st.selectbox(
-                "開催形式",
-                selectlist_format,
-                index=selectlist_format.index(query_params_format)
-                if query_params_format in selectlist_format
+            selected_event_type = st.selectbox(
+                "イベント種類",
+                selectlist_event_type,
+                index=selectlist_event_type.index(query_params_event_type)
+                if query_params_event_type in selectlist_event_type
                 else 0,
             )
 
@@ -103,19 +103,19 @@ if csv_path.exists():
             if "organizer" in st.query_params:
                 del st.query_params["organizer"]
 
-        # 開催形式が選択された場合
-        if selected_format == "オンライン":
-            # 住所が空の場合をオンラインと判定
-            data = data[data["住所"].fillna("").str.strip() == ""]
-            st.query_params["format"] = "オンライン"
-        elif selected_format == "物理開催":
-            # 住所がある場合を物理開催と判定
-            data = data[data["住所"].fillna("").str.strip() != ""]
-            st.query_params["format"] = "物理開催"
+        # イベント種類が選択された場合
+        if selected_event_type == "本イベント":
+            # イベント種類が本イベントの場合
+            data = data[data["イベント種類"] == "本イベント"]
+            st.query_params["event_type"] = "本イベント"
+        elif selected_event_type == "プレイベント":
+            # イベント種類がプレイベントの場合
+            data = data[data["イベント種類"] == "プレイベント"]
+            st.query_params["event_type"] = "プレイベント"
         else:
-            # 開催形式が全ての場合はパラメーターを削除
-            if "format" in st.query_params:
-                del st.query_params["format"]
+            # イベント種類が全ての場合はパラメーターを削除
+            if "event_type" in st.query_params:
+                del st.query_params["event_type"]
 
         # イベントの数が0の場合はメッセージを表示
         if len(data) == 0:
@@ -137,6 +137,7 @@ if csv_path.exists():
         url_column = data.columns[6]  # URL列
         address_column = data.columns[7]  # 住所列
         organizer_column = data.columns[8]  # 主催者列
+        event_type_column = data.columns[9]  # イベント種類列
 
         # 日付列を日本向け表記変換
         data[start_date_column] = pd.to_datetime(data[start_date_column]).dt.tz_convert(
