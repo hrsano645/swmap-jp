@@ -245,9 +245,9 @@ class StartupWeekendEventCollector:
         startup_keywords = [
             "startup weekend",
             "startupweekend",
-            "sw",
-            "スタートアップウィークエンド",
-            "スタートアップ ウィークエンド",
+            # "sw",
+            # "スタートアップウィークエンド",
+            # "スタートアップ ウィークエンド",
         ]
 
         # 検索対象テキストを結合
@@ -542,8 +542,8 @@ class StartupWeekendEventCollector:
             "startup weekend",
             "startupweekend",
             "startup",
-            "スタートアップウィークエンド",
-            "スタートアップ",
+            # "スタートアップウィークエンド",
+            # "スタートアップ",
         ]
 
         for keyword in startup_keywords:
