@@ -770,18 +770,27 @@ class StartupWeekendEventCollector:
         """開催日時からイベント種類を判定"""
         try:
             if not start_date or not end_date:
-                return "本イベント"  # デフォルト
+                return "その他"  # デフォルト
 
             # 日付部分のみを比較
             start_date_only = start_date[:10]  # YYYY-MM-DD
             end_date_only = end_date[:10]  # YYYY-MM-DD
 
-            if start_date_only == end_date_only:
-                return "プレイベント"  # 同日開催
+            # 日付をdatetimeオブジェクトに変換
+            from datetime import datetime
+
+            start_dt = datetime.fromisoformat(start_date_only)
+            end_dt = datetime.fromisoformat(end_date_only)
+
+            # 日数を計算（終了日 - 開始日 + 1）
+            duration_days = (end_dt - start_dt).days + 1
+
+            if duration_days == 3:
+                return "本イベント"  # 3日間開催
             else:
-                return "本イベント"  # 複数日開催
+                return "その他"  # 3日間以外
         except Exception:
-            return "本イベント"  # エラー時はデフォルト
+            return "その他"  # エラー時はデフォルト
 
     def collect_all_events(self):
         """全イベント収集の実行"""

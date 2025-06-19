@@ -70,7 +70,7 @@ if csv_path.exists():
         query_params_event_type = "全て"
         if "event_type" in url_params:
             query_params_event_type = url_params["event_type"]
-        selectlist_event_type: list = ["全て", "本イベント", "プレイベント"]
+        selectlist_event_type: list = ["全て", "本イベント", "その他"]
 
         # 横並びにするためのカラムを作成
         col1, col2 = st.columns(2)
@@ -108,10 +108,10 @@ if csv_path.exists():
             # イベント種類が本イベントの場合
             data = data[data["イベント種類"] == "本イベント"]
             st.query_params["event_type"] = "本イベント"
-        elif selected_event_type == "プレイベント":
-            # イベント種類がプレイベントの場合
-            data = data[data["イベント種類"] == "プレイベント"]
-            st.query_params["event_type"] = "プレイベント"
+        elif selected_event_type == "その他":
+            # イベント種類がその他の場合
+            data = data[data["イベント種類"] == "その他"]
+            st.query_params["event_type"] = "その他"
         else:
             # イベント種類が全ての場合はパラメーターを削除
             if "event_type" in st.query_params:
