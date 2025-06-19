@@ -715,10 +715,12 @@ class StartupWeekendEventCollector:
                 # 開催日が存在する場合のみソート
                 if "開催日" in df.columns and not df["開催日"].empty:
                     # 空の値を最後に持ってくるためにna_position='last'を指定
-                    df = df.sort_values(by="開催日", ascending=True, na_position='last')
+                    df = df.sort_values(by="開催日", ascending=True, na_position="last")
                     print("📅 開催日順にソートしました")
-            except Exception as sort_error:
-                print(f"⚠️ ソート処理でエラーが発生しましたが、処理を続行します: {sort_error}")
+            except (KeyError, TypeError) as sort_error:
+                print(
+                    f"⚠️ ソート処理でエラーが発生しましたが、処理を続行します: {sort_error}"
+                )
 
             # データ型を統一
             df = df.astype(str)
