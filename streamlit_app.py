@@ -3,11 +3,143 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 from pathlib import Path
+from urllib.parse import quote, urlencode
+from datetime import datetime
+import uuid
+import base64
+import re
 
 
 # CSVファイルのパスを設定
 csv_path = Path("./startup_weekend_events.csv")
 last_run_time_path = Path("./last_run_time.txt")
+
+
+def generate_google_calendar_url(event_name, start_date, end_date, location, description, event_url):
+    """Google Calendarに追加するためのURLを生成"""
+    try:
+        # 日付文字列をdatetimeオブジェクトに変換
+        start_dt = pd.to_datetime(start_date).strftime('%Y%m%dT%H%M%S')
+        end_dt = pd.to_datetime(end_date).strftime('%Y%m%dT%H%M%S')
+        
+        # イベント詳細を作成
+        details = f"{description}\n\nイベントページ: {event_url}"
+        
+        # Google CalendarのURL生成
+        params = {
+            'action': 'TEMPLATE',
+            'text': event_name,
+            'dates': f"{start_dt}/{end_dt}",
+            'location': location,
+            'details': details
+        }
+        
+        base_url = "https://calendar.google.com/calendar/render?"
+        return base_url + urlencode(params)
+    except Exception as e:
+        st.error(f"Google Calendar URL生成エラー: {e}")
+        return None
+
+
+def generate_ical_content(event_name, start_date, end_date, location, description, event_url):
+    """iCal形式のコンテンツを生成"""
+    try:
+        # 日付文字列をdatetimeオブジェクトに変換（UTC）
+        start_dt = pd.to_datetime(start_date).strftime('%Y%m%dT%H%M%SZ')
+        end_dt = pd.to_datetime(end_date).strftime('%Y%m%dT%H%M%SZ')
+        
+        # ユニークなUID生成
+        event_uid = str(uuid.uuid4())
+        
+        # 現在時刻（作成日時）
+        now = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        
+        # iCalコンテンツ生成
+        ical_content = f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Startup Weekend Map Japan//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:{event_uid}@swmap-jp.com
+DTSTART:{start_dt}
+DTEND:{end_dt}
+DTSTAMP:{now}
+CREATED:{now}
+LAST-MODIFIED:{now}
+SUMMARY:{event_name}
+LOCATION:{location}
+DESCRIPTION:{description}\\n\\nイベントページ: {event_url}
+URL:{event_url}
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR"""
+        
+        return ical_content
+    except Exception as e:
+        st.error(f"iCal生成エラー: {e}")
+        return None
+
+
+def extract_event_id_from_url(event_url):
+    """URLからイベントIDとプラットフォームを抽出"""
+    try:
+        # Peatixのパターン: https://peatix.com/event/12345678
+        peatix_match = re.search(r'peatix\.com/event/(\d+)', event_url)
+        if peatix_match:
+            return 'peatix', peatix_match.group(1)
+        
+        # Doorkeeperのパターン: https://doorkeeper.jp/events/abcd1234
+        doorkeeper_match = re.search(r'doorkeeper\.jp/events/([a-zA-Z0-9]+)', event_url)
+        if doorkeeper_match:
+            return 'doorkeeper', doorkeeper_match.group(1)
+        
+        # その他のURLの場合はNoneを返す
+        return None, None
+    except Exception:
+        return None, None
+
+
+def generate_ical_filename(start_date, end_date, event_url):
+    """iCalファイル名を生成"""
+    try:
+        # 開始日をフォーマット
+        start_dt = pd.to_datetime(start_date).strftime('%Y%m%d%H%M')
+        
+        # URLからイベントIDを抽出
+        platform, event_id = extract_event_id_from_url(event_url)
+        
+        if platform and event_id:
+            # プラットフォーム+ID形式
+            filename = f"swevent_{start_dt}_{platform}_{event_id}.ics"
+        else:
+            # フォールバック: 開始日+終了日形式
+            end_dt = pd.to_datetime(end_date).strftime('%Y%m%d%H%M')
+            filename = f"swevent_{start_dt}_{end_dt}.ics"
+        
+        return filename
+    except Exception:
+        # エラー時のフォールバック
+        return f"swevent_{datetime.now().strftime('%Y%m%d%H%M')}.ics"
+
+
+def generate_ical_download_link(event_name, start_date, end_date, location, description, event_url):
+    """iCalファイルのdata URIダウンロードリンクを生成"""
+    try:
+        ical_content = generate_ical_content(event_name, start_date, end_date, location, description, event_url)
+        if ical_content:
+            # Base64エンコード
+            b64_ical = base64.b64encode(ical_content.encode('utf-8')).decode('utf-8')
+            # ファイル名を生成
+            filename = generate_ical_filename(start_date, end_date, event_url)
+            # data URIを生成
+            data_uri = f"data:text/calendar;base64,{b64_ical}"
+            return data_uri, filename
+        return None, None
+    except Exception as e:
+        st.error(f"iCalリンク生成エラー: {e}")
+        return None, None
 
 st.set_page_config(
     layout="wide",
@@ -279,6 +411,56 @@ if csv_path.exists():
                 .map-link:hover {
                     background-color: #ffcdd2;
                 }
+                .calendar-dropdown {
+                    position: relative;
+                    display: inline-block;
+                }
+                .calendar-button {
+                    background-color: #f3e5f5;
+                    color: #333;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    text-decoration: none;
+                    font-size: 12px;
+                    display: inline-block;
+                    margin: 5px 5px 0 0;
+                    transition: background-color 0.2s;
+                    border: 1px solid #ce93d8;
+                    cursor: pointer;
+                }
+                .calendar-button:hover {
+                    background-color: #e1bee7;
+                    color: #333;
+                    text-decoration: none;
+                }
+                .calendar-dropdown-content {
+                    display: none;
+                    position: absolute;
+                    background-color: white;
+                    min-width: 200px;
+                    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                    z-index: 1;
+                    border-radius: 8px;
+                    padding: 8px 0;
+                    top: 100%;
+                    left: 0;
+                }
+                .calendar-dropdown:hover .calendar-dropdown-content {
+                    display: block;
+                }
+                .calendar-option {
+                    color: #333;
+                    padding: 8px 16px;
+                    text-decoration: none;
+                    display: block;
+                    font-size: 12px;
+                    transition: background-color 0.2s;
+                }
+                .calendar-option:hover {
+                    background-color: #f5f5f5;
+                    text-decoration: none;
+                    color: #333;
+                }
                 </style>
                 """,
                     unsafe_allow_html=True,
@@ -307,6 +489,32 @@ if csv_path.exists():
                         map_link = f"https://www.google.com/maps/search/?api=1&query={row[address_column]}"
 
                     with cols[col_idx]:
+                        # カレンダー用のURLとコンテンツ生成
+                        google_calendar_url = generate_google_calendar_url(
+                            row[event_name_column],
+                            row[start_date_column],
+                            row[end_date_column],
+                            row[place_column],
+                            f"主催者: {row[organizer_column]}",
+                            row[url_column]
+                        )
+                        ical_data_uri, ical_filename = generate_ical_download_link(
+                            row[event_name_column],
+                            row[start_date_column],
+                            row[end_date_column],
+                            row[place_column],
+                            f"主催者: {row[organizer_column]}",
+                            row[url_column]
+                        )
+                        
+                        # カレンダーリンクのHTML生成
+                        calendar_links = ""
+                        if google_calendar_url:
+                            calendar_links += f'<a href="{google_calendar_url}" target="_blank" class="event-link" style="background-color: #e3f2fd; border: 1px solid #90caf9; color: #333;">📅 Google Calendar</a>'
+                        if ical_data_uri and ical_filename:
+                            calendar_links += f'<a href="{ical_data_uri}" download="{ical_filename}" class="event-link" style="background-color: #f3e5f5; border: 1px solid #ce93d8; color: #333;">📅 iCal</a>'
+                        
+                        # カードのHTMLコンテンツ
                         st.markdown(
                             f"""
                         <div class="event-card {card_class}">
@@ -326,6 +534,7 @@ if csv_path.exists():
                             <div style="margin-top: 15px;">
                                 <a href="{row[url_column]}" target="_blank" class="event-link">イベント詳細</a>
                                 <a href="{map_link}" target="_blank" class="event-link map-link">地図で見る</a>
+                                {calendar_links}
                             </div>
                         </div>
                         """,
