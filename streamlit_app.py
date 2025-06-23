@@ -204,12 +204,124 @@ if csv_path.exists():
                 ).add_to(m)
 
             # タブを作成
-            tab1, tab2 = st.tabs(["マップ", "データ"])
+            tab1, tab2, tab3 = st.tabs(["マップ", "リスト", "データ"])
 
             with tab1:
                 st_folium(m, height=600, use_container_width=True)
 
             with tab2:
+                # カードリスト表示
+                # カード用のCSS
+                st.markdown("""
+                <style>
+                .event-card {
+                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                    border-radius: 15px;
+                    padding: 20px;
+                    margin: 10px 0;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    border-left: 5px solid #4CAF50;
+                    transition: transform 0.2s ease;
+                }
+                .event-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+                }
+                .event-card.main-event {
+                    border-left-color: #FF6B6B;
+                    background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+                }
+                .event-card.other-event {
+                    border-left-color: #4ECDC4;
+                    background: linear-gradient(135deg, #f0fdfc 0%, #e0f7f5 100%);
+                }
+                .event-title {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #2c3e50;
+                    margin-bottom: 10px;
+                    line-height: 1.3;
+                }
+                .event-info {
+                    color: #34495e;
+                    font-size: 14px;
+                    margin: 5px 0;
+                    display: flex;
+                    align-items: center;
+                }
+                .event-icon {
+                    margin-right: 8px;
+                    font-size: 16px;
+                }
+                .event-link {
+                    background-color: #e3f2fd;
+                    color: #333;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    text-decoration: none;
+                    font-size: 12px;
+                    display: inline-block;
+                    margin: 5px 5px 0 0;
+                    transition: background-color 0.2s;
+                    border: 1px solid #90caf9;
+                }
+                .event-link:hover {
+                    background-color: #bbdefb;
+                    color: #333;
+                    text-decoration: none;
+                }
+                .map-link {
+                    background-color: #ffebee;
+                    border: 1px solid #ef9a9a;
+                }
+                .map-link:hover {
+                    background-color: #ffcdd2;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+                
+                # カード表示用のデータ準備
+                card_data = data.copy()
+                
+                # 列数を設定（画面幅に応じて調整）
+                cols = st.columns(2)
+                
+                for idx, (_, row) in enumerate(card_data.iterrows()):
+                    col_idx = idx % 2
+                    
+                    # イベント種類による色分け
+                    card_class = "main-event" if row[event_type_column] == "本イベント" else "other-event"
+                    
+                    # Googleマップリンクの作成
+                    if pd.notna(row[lat_column]) and pd.notna(row[lon_column]):
+                        map_link = f"https://www.google.com/maps/search/?api=1&query={row[lat_column]},{row[lon_column]}"
+                    else:
+                        map_link = f"https://www.google.com/maps/search/?api=1&query={row[address_column]}"
+                    
+                    with cols[col_idx]:
+                        st.markdown(f"""
+                        <div class="event-card {card_class}">
+                            <div class="event-title">{row[event_name_column]}</div>
+                            <div class="event-info">
+                                <span class="event-icon">📅</span>
+                                {row[start_date_column]}
+                            </div>
+                            <div class="event-info">
+                                <span class="event-icon">📍</span>
+                                {row[place_column]}
+                            </div>
+                            <div class="event-info">
+                                <span class="event-icon">🏠</span>
+                                {row[address_column]}
+                            </div>
+                            <div style="margin-top: 15px;">
+                                <a href="{row[url_column]}" target="_blank" class="event-link">イベント詳細</a>
+                                <a href="{map_link}" target="_blank" class="event-link map-link">地図で見る</a>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+            with tab3:
                 st.dataframe(
                     event_data,
                     use_container_width=True,
