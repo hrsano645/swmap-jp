@@ -4,7 +4,7 @@ import folium
 from streamlit_folium import st_folium
 from pathlib import Path
 from urllib.parse import quote, urlencode
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import base64
 import re
@@ -52,7 +52,7 @@ def generate_ical_content(event_name, start_date, end_date, location, descriptio
         event_uid = str(uuid.uuid4())
         
         # 現在時刻（作成日時）
-        now = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        now = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
         
         # iCalコンテンツ生成
         ical_content = f"""BEGIN:VCALENDAR
@@ -296,32 +296,182 @@ if csv_path.exists():
             # インデックスを文字列に変換
             map_data["index"] = map_data.index.astype(str)
 
-            # 詳細情報を含むカラムを作成
-            map_data["info"] = (
-                "イベント名: "
-                + map_data[event_name_column]
-                + "<br>"
-                + "主催者: "
-                + map_data[organizer_column]
-                + "<br>"
-                + "開催日時: "
-                + map_data[start_date_column]
-                + " ~ "
-                + map_data[end_date_column]
-                + "<br>"
-                + "開催場所: "
-                + map_data[place_column]
-                + "<br>"
-                + '<a href="'
-                + map_data[url_column]
-                + '" target="_blank">イベントページ</a>'
-                + "<br>"
-                + "<a href='https://www.google.com/maps/search/?api=1&query="
-                + map_data[lat_column].astype(str)
-                + ","
-                + map_data[lon_column].astype(str)
-                + "' target='_blank'>Googleマップで開く</a>"
-            )
+            # 同一地点のイベントをグループ化
+            def group_events_by_location(df):
+                """緯度・経度でイベントをグループ化"""
+                grouped = df.groupby([lat_column, lon_column])
+                location_groups = []
+                
+                for (lat, lon), group in grouped:
+                    events = []
+                    for _, row in group.iterrows():
+                        events.append({
+                            'name': row[event_name_column],
+                            'organizer': row[organizer_column],
+                            'start_date': row[start_date_column],
+                            'end_date': row[end_date_column],
+                            'place': row[place_column],
+                            'url': row[url_column],
+                            'event_type': row[event_type_column]
+                        })
+                    
+                    location_groups.append({
+                        'lat': lat,
+                        'lon': lon,
+                        'events': events,
+                        'count': len(events)
+                    })
+                
+                return location_groups
+            
+            location_groups = group_events_by_location(map_data)
+            
+            def create_popup_html(events, lat, lon):
+                """装飾されたポップアップHTMLを生成"""
+                
+                # CSSスタイル定義
+                css_style = """
+                <style>
+                .popup-container {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    max-width: 400px;
+                    margin: 0;
+                    padding: 0;
+                }
+                .popup-header {
+                    background: #f8f9fa;
+                    color: #495057;
+                    padding: 12px 16px;
+                    border-radius: 8px 8px 0 0;
+                    font-weight: bold;
+                    font-size: 14px;
+                    text-align: center;
+                    border-bottom: 1px solid #dee2e6;
+                }
+                .event-item {
+                    background: #fafafa;
+                    border: 1px solid #e1e5e9;
+                    margin: 8px 0;
+                    border-radius: 8px;
+                    overflow: hidden;
+                }
+                .event-item.main-event {
+                    border-left: 4px solid #dc3545;
+                }
+                .event-item.other-event {
+                    border-left: 4px solid #28a745;
+                }
+                .event-content {
+                    padding: 12px 16px;
+                }
+                .event-title {
+                    font-size: 15px;
+                    font-weight: bold;
+                    color: #2c3e50;
+                    margin-bottom: 8px;
+                    line-height: 1.3;
+                }
+                .event-detail {
+                    font-size: 12px;
+                    color: #5a6c7d;
+                    margin: 4px 0;
+                    display: flex;
+                    align-items: center;
+                }
+                .event-icon {
+                    margin-right: 6px;
+                    font-size: 12px;
+                    width: 14px;
+                    text-align: center;
+                }
+                .event-links {
+                    margin-top: 10px;
+                    padding-top: 8px;
+                    border-top: 1px solid #f0f2f5;
+                }
+                .event-link {
+                    display: inline-block;
+                    background: #f8f9fa;
+                    color: #495057;
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    text-decoration: none;
+                    font-size: 11px;
+                    margin: 2px 4px 2px 0;
+                    border: 1px solid #dee2e6;
+                    transition: all 0.2s ease;
+                }
+                .event-link:hover {
+                    background: #e9ecef;
+                    text-decoration: none;
+                    color: #495057;
+                }
+                .map-link {
+                    background: #e2e3e5;
+                    border-color: #ced4da;
+                    color: #6c757d;
+                }
+                .map-link:hover {
+                    background: #d1ecf1;
+                    color: #0c5460;
+                }
+                .popup-footer {
+                    background: #f8f9fa;
+                    padding: 8px 16px;
+                    border-radius: 0 0 8px 8px;
+                    border-top: 1px solid #e9ecef;
+                    text-align: center;
+                }
+                </style>
+                """
+                
+                # ヘッダー部分
+                event_count_text = f"{len(events)}件のイベント" if len(events) > 1 else "1件のイベント"
+                html_content = f"""
+                {css_style}
+                <div class="popup-container">
+                    <div class="popup-header">
+                        📍 {event_count_text}
+                    </div>
+                """
+                
+                # 各イベントの情報を追加
+                for event in events:
+                    event_class = "main-event" if event['event_type'] == "本イベント" else "other-event"
+                    
+                    html_content += f"""
+                    <div class="event-item {event_class}">
+                        <div class="event-content">
+                            <div class="event-title">{event['name']}</div>
+                            <div class="event-detail">
+                                <span class="event-icon">👥</span>
+                                {event['organizer']}
+                            </div>
+                            <div class="event-detail">
+                                <span class="event-icon">📅</span>
+                                {event['start_date']}
+                            </div>
+                            <div class="event-detail">
+                                <span class="event-icon">📍</span>
+                                {event['place']}
+                            </div>
+                            <div class="event-links">
+                                <a href="{event['url']}" target="_blank" class="event-link">📝 詳細</a>
+                            </div>
+                        </div>
+                    </div>
+                    """
+                
+                # フッター部分
+                google_maps_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+                html_content += f"""
+                    <div class="popup-footer">
+                        <a href="{google_maps_url}" target="_blank" class="event-link map-link">🗺️ Googleマップで開く</a>
+                    </div>
+                </div>
+                """
+                
+                return html_content
 
             # Foliumマップを作成
             m = folium.Map(
@@ -329,11 +479,42 @@ if csv_path.exists():
                 zoom_start=5,
             )
 
-            for i, row in map_data.iterrows():
+            # 新しいグループベースのマーカー生成
+            for location_group in location_groups:
+                lat = location_group['lat']
+                lon = location_group['lon']
+                events = location_group['events']
+                count = location_group['count']
+                
+                # ポップアップHTMLを生成
+                popup_html = create_popup_html(events, lat, lon)
+                
+                # マーカーのアイコンを決定（複数イベントの場合は数字付き）
+                if count > 1:
+                    # 複数イベントの場合
+                    icon_color = "blue"
+                    icon_symbol = "info-sign"
+                    # 複数イベント用のアイコン（数字付き）
+                    icon = folium.Icon(
+                        color=icon_color, 
+                        icon=icon_symbol,
+                        prefix='fa'
+                    )
+                else:
+                    # 単一イベントの場合
+                    event_type = events[0]['event_type']
+                    if event_type == "本イベント":
+                        icon_color = "red"
+                    else:
+                        icon_color = "green"
+                    icon = folium.Icon(color=icon_color, icon="info-sign")
+                
+                # マーカーを地図に追加
                 folium.Marker(
-                    location=[row[lat_column], row[lon_column]],
-                    popup=folium.Popup(row["info"], max_width=360),
-                    icon=folium.Icon(color="gray", icon="info-sign"),
+                    location=[lat, lon],
+                    popup=folium.Popup(popup_html, max_width=450),
+                    icon=icon,
+                    tooltip=f"{count}件のStartup Weekend イベント" if count > 1 else events[0]['name'][:30] + "..."
                 ).add_to(m)
 
             # タブを作成
