@@ -21,21 +21,22 @@ st.markdown(
 
 # サイドバーにアプリの概要を表示
 with st.sidebar:
-    st.markdown(
-        """
-        Startup Weekendのイベント情報と開催地をマップで表示します。ただいまベータバージョンとして公開中です。
-        
-        ### 注意事項
+    with st.expander("このサイトは？", expanded=True):
+        st.markdown(
+            """
+            Startup Weekendのイベント情報と開催地をマップで表示します。ただいまベータバージョンとして公開中です。
+            
+            ### 注意事項
 
-        * Peatixのイベント情報を収集し、一覧を作成しています。一部Doorkeeperでの公開イベントも収集しています。
-        * このサービスはStartup Weekend オーガナイザーの個人プロジェクトです。不備などがありましたら以下の連絡先までお知らせください。
-        * ソースコードはGitHubにて公開しています。修正提案は歓迎しています。issueからお気軽にお知らせください。→ [GitHub](https://github.com/hrsano645/swmap-jp)
+            * Peatixのイベント情報を収集し、一覧を作成しています。一部Doorkeeperでの公開イベントも収集しています。
+            * このサービスはStartup Weekend オーガナイザーの個人プロジェクトです。不備などがありましたら以下の連絡先までお知らせください。
+            * ソースコードはGitHubにて公開しています。修正提案は歓迎しています。issueからお気軽にお知らせください。→ [GitHub](https://github.com/hrsano645/swmap-jp)
 
-        ### 作成者
+            ### 作成者
 
-        * Hiroshi Sano: [X](https://x.com/hrs_sano645), [FB](https://www.facebook.com/hrs.sano645)
-        """
-    )
+            * Hiroshi Sano: [X](https://x.com/hrs_sano645), [FB](https://www.facebook.com/hrs.sano645)
+            """
+        )
 
     if last_run_time_path.exists():
         with open(last_run_time_path, "r") as file:
@@ -212,7 +213,8 @@ if csv_path.exists():
             with tab2:
                 # カードリスト表示
                 # カード用のCSS
-                st.markdown("""
+                st.markdown(
+                    """
                 <style>
                 .event-card {
                     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -278,28 +280,35 @@ if csv_path.exists():
                     background-color: #ffcdd2;
                 }
                 </style>
-                """, unsafe_allow_html=True)
-                
+                """,
+                    unsafe_allow_html=True,
+                )
+
                 # カード表示用のデータ準備
                 card_data = data.copy()
-                
+
                 # 列数を設定（画面幅に応じて調整）
                 cols = st.columns(2)
-                
+
                 for idx, (_, row) in enumerate(card_data.iterrows()):
                     col_idx = idx % 2
-                    
+
                     # イベント種類による色分け
-                    card_class = "main-event" if row[event_type_column] == "本イベント" else "other-event"
-                    
+                    card_class = (
+                        "main-event"
+                        if row[event_type_column] == "本イベント"
+                        else "other-event"
+                    )
+
                     # Googleマップリンクの作成
                     if pd.notna(row[lat_column]) and pd.notna(row[lon_column]):
                         map_link = f"https://www.google.com/maps/search/?api=1&query={row[lat_column]},{row[lon_column]}"
                     else:
                         map_link = f"https://www.google.com/maps/search/?api=1&query={row[address_column]}"
-                    
+
                     with cols[col_idx]:
-                        st.markdown(f"""
+                        st.markdown(
+                            f"""
                         <div class="event-card {card_class}">
                             <div class="event-title">{row[event_name_column]}</div>
                             <div class="event-info">
@@ -319,7 +328,9 @@ if csv_path.exists():
                                 <a href="{map_link}" target="_blank" class="event-link map-link">地図で見る</a>
                             </div>
                         </div>
-                        """, unsafe_allow_html=True)
+                        """,
+                            unsafe_allow_html=True,
+                        )
 
             with tab3:
                 st.dataframe(
