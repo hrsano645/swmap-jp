@@ -4,7 +4,7 @@ import folium
 from streamlit_folium import st_folium
 from pathlib import Path
 from urllib.parse import quote, urlencode
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import base64
 import re
@@ -52,7 +52,7 @@ def generate_ical_content(event_name, start_date, end_date, location, descriptio
         event_uid = str(uuid.uuid4())
         
         # 現在時刻（作成日時）
-        now = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        now = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
         
         # iCalコンテンツ生成
         ical_content = f"""BEGIN:VCALENDAR
