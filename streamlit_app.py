@@ -14,22 +14,22 @@ st.set_page_config(
     page_title="Startup Weekend Map for Japan",
 )
 
-st.title("[beta]Startup Weekend Map for Japan")
+st.markdown(
+    "<h3 style='text-align: center;'>Startup Weekend Map for Japan</h3>",
+    unsafe_allow_html=True,
+)
 
 # サイドバーにアプリの概要を表示
-with st.sidebar.expander("このサイトは？", expanded=True):
+with st.sidebar:
     st.markdown(
         """
-        Startup Weekendのイベント情報と開催地をマップで表示します。
-
-        ソースコードはGitHubにて公開しています。修正提案は歓迎しています。issueからお気軽にお知らせください。
-
-        → [GitHub](https://github.com/hrsano645/swmap-jp)
+        Startup Weekendのイベント情報と開催地をマップで表示します。ただいまベータバージョンとして公開中です。
         
         ### 注意事項
 
         * Peatixのイベント情報を収集し、一覧を作成しています。一部Doorkeeperでの公開イベントも収集しています。
         * このサービスはStartup Weekend オーガナイザーの個人プロジェクトです。不備などがありましたら以下の連絡先までお知らせください。
+        * ソースコードはGitHubにて公開しています。修正提案は歓迎しています。issueからお気軽にお知らせください。→ [GitHub](https://github.com/hrsano645/swmap-jp)
 
         ### 作成者
 
@@ -203,19 +203,19 @@ if csv_path.exists():
                     icon=folium.Icon(color="gray", icon="info-sign"),
                 ).add_to(m)
 
-            # 横並びにするためのカラムを作成
-            col1, col2 = st.columns([1, 1])
+            # タブを作成
+            tab1, tab2 = st.tabs(["マップ", "データ"])
 
-            with col1:
+            with tab1:
+                st_folium(m, height=600, use_container_width=True)
+
+            with tab2:
                 st.dataframe(
                     event_data,
                     use_container_width=True,
                     hide_index=True,
                     column_config={url_column: st.column_config.LinkColumn()},
                 )
-
-            with col2:
-                st_folium(m, height=600, use_container_width=True)
 
     except Exception as e:
         st.error(f"データの読み込みに失敗しました: {e}")
