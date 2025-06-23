@@ -333,6 +333,10 @@ if csv_path.exists():
                         )
 
             with tab3:
+                st.info(
+                    """イベントの詳細情報を表形式で表示します。URLをクリックすると、イベントページへ移動します。  
+                    表を選択中、右上にCSVファイルのダウンロードボタンが現れます。データとして利用したい場合にご利用ください"""
+                )
                 st.dataframe(
                     event_data,
                     use_container_width=True,
