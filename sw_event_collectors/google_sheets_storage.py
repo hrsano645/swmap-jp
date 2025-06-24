@@ -6,10 +6,10 @@ Google Sheetsへのイベントデータ保存処理
 import pandas as pd
 import gspread
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from typing import List, Dict
 
 from .config import Config
+from .utils import convert_to_jst
 
 
 class GoogleSheetsStorage:
@@ -17,6 +17,8 @@ class GoogleSheetsStorage:
 
     def __init__(self, config: Config):
         self.config = config
+        # Google Sheetsクライアントを一度だけ初期化
+        self.gc = gspread.service_account(filename="service_account.json")
 
     def save_events(self, events: List[Dict]):
         """Google Sheetsにイベントデータを保存"""
@@ -46,9 +48,8 @@ class GoogleSheetsStorage:
             df = df.astype(str)
             df.fillna("", inplace=True)
 
-            # Google Sheets APIの認証
-            gc = gspread.service_account(filename="service_account.json")
-            spreadsheet = gc.open_by_key(self.config.google_sheet_id)
+            # Google Sheetsクライアントを使用
+            spreadsheet = self.gc.open_by_key(self.config.google_sheet_id)
             data_worksheet = spreadsheet.get_worksheet_by_id(
                 int(self.config.google_sheet_data_gid)
             )
@@ -69,11 +70,10 @@ class GoogleSheetsStorage:
     def update_last_run_time(self):
         """実行時刻を記録"""
         try:
-            last_run_time_jst = self._convert_to_jst(datetime.now().isoformat())
+            last_run_time_jst = convert_to_jst(datetime.now().isoformat())
             
-            # Google Sheets APIの認証
-            gc = gspread.service_account(filename="service_account.json")
-            spreadsheet = gc.open_by_key(self.config.google_sheet_id)
+            # Google Sheetsクライアントを使用
+            spreadsheet = self.gc.open_by_key(self.config.google_sheet_id)
             last_run_time_worksheet = spreadsheet.get_worksheet_by_id(
                 int(self.config.google_sheet_last_run_time_gid)
             )
@@ -88,25 +88,3 @@ class GoogleSheetsStorage:
         except Exception as e:
             print(f"❌ 実行時刻の記録でエラーが発生しました: {e}")
 
-    def _convert_to_jst(self, utc_time: str) -> str:
-        """UTC時間を日本時間に変換する"""
-        try:
-            if isinstance(utc_time, str):
-                # Peatixの日時データ（既に日本時間、タイムゾーン情報なし）の場合
-                if "T" not in utc_time and " " in utc_time:
-                    # "2025-06-13 18:00:00" 形式の場合、日本時間として扱う
-                    dt = datetime.fromisoformat(utc_time)
-                    # 日本時間のタイムゾーン情報を付与
-                    jst_dt = dt.replace(tzinfo=ZoneInfo("Asia/Tokyo"))
-                    return jst_dt.isoformat()
-                elif utc_time.endswith("Z"):
-                    utc = datetime.fromisoformat(utc_time.replace("Z", "+00:00"))
-                else:
-                    utc = datetime.fromisoformat(utc_time)
-            else:
-                utc = utc_time
-
-            jst = utc.astimezone(ZoneInfo("Asia/Tokyo"))
-            return jst.isoformat()
-        except Exception:
-            return str(utc_time)

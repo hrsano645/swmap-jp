@@ -19,20 +19,20 @@ class EventProcessor:
         merged_events = peatix_events.copy()
 
         # Doorkeeperイベントを追加（重複チェック）
-        for dk_event in doorkeeper_events:
+        for doorkeeper_event in doorkeeper_events:
             is_duplicate = False
 
-            for i, px_event in enumerate(merged_events):
-                if self._is_duplicate_event(dk_event, px_event):
+            for i, peatix_event in enumerate(merged_events):
+                if self._is_duplicate_event(doorkeeper_event, peatix_event):
                     # 重複発見：Peatix優先なので何もしない
                     print(
-                        f"🔄 重複イベントを検出（Peatix優先）: {px_event['イベント名']}"
+                        f"🔄 重複イベントを検出（Peatix優先）: {peatix_event['イベント名']}"
                     )
                     is_duplicate = True
                     break
 
             if not is_duplicate:
-                merged_events.append(dk_event)
+                merged_events.append(doorkeeper_event)
 
         print(f"✅ マージ完了: 合計 {len(merged_events)} 件のイベント")
         return merged_events

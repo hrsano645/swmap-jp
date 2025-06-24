@@ -100,13 +100,17 @@ class PeatixCollector(BaseCollector):
                 print(f"🔍 検索URL: {search_url}")
                 self.driver.get(search_url)
 
-                # ページの読み込み待機
-                WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.TAG_NAME, "body"))
-                )
-
-                # 追加の待機時間
-                time.sleep(3)
+                # ページの読み込み待機 - イベントリストが表示されるまで待機
+                try:
+                    WebDriverWait(self.driver, 15).until(
+                        EC.presence_of_element_located((By.CLASS_NAME, "event-list"))
+                    )
+                except Exception:
+                    # event-listが見つからない場合はbodyの読み込み完了まで待機
+                    WebDriverWait(self.driver, 10).until(
+                        EC.presence_of_element_located((By.TAG_NAME, "body"))
+                    )
+                    time.sleep(2)  # 最小限の待機時間
 
                 soup = BeautifulSoup(self.driver.page_source, "html.parser")
 
@@ -150,7 +154,13 @@ class PeatixCollector(BaseCollector):
                     break
 
                 page += 1
-                time.sleep(2)  # ページ間の待機
+                # ページ間の待機 - 次ページリンクが無効になるまで待機
+                try:
+                    WebDriverWait(self.driver, 5).until_not(
+                        EC.element_to_be_clickable((By.LINK_TEXT, "次"))
+                    )
+                except Exception:
+                    time.sleep(1)  # フォールバック待機
 
                 # 安全のため最大5ページまでに制限
                 if page > 5:
@@ -168,11 +178,21 @@ class PeatixCollector(BaseCollector):
         try:
             print(f"📄 詳細取得中: {event_url}")
             self.driver.get(event_url)
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.TAG_NAME, "body"))
-            )
-
-            time.sleep(3)
+            # イベント詳細ページの読み込み待機
+            try:
+                # イベントタイトルまたはメインコンテンツの読み込み完了を待機
+                WebDriverWait(self.driver, 15).until(
+                    EC.any_of(
+                        EC.presence_of_element_located((By.CLASS_NAME, "event-summary__title")),
+                        EC.presence_of_element_located((By.TAG_NAME, "main"))
+                    )
+                )
+            except Exception:
+                # フォールバック: bodyの読み込み完了を待機
+                WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.TAG_NAME, "body"))
+                )
+                time.sleep(2)  # 最小限の待機
 
             page_source = self.driver.page_source
 
