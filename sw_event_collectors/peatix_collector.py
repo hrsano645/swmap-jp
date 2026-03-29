@@ -93,9 +93,8 @@ class PeatixCollector(BaseCollector):
 
         while True:
             try:
-                # 元のスクリプトと同じ詳細な検索パラメーターを使用
                 encoded_keyword = quote_plus(keyword)
-                search_url = f"https://peatix.com/search?q={encoded_keyword}&country=JP&l.text=%E3%81%99%E3%81%B9%E3%81%A6%E3%81%AE%E5%A0%B4%E6%89%80&p={page}&size=20&v=3.4&tag_ids=&dr="
+                search_url = f"https://peatix.com/search?q={encoded_keyword}&loc=Anywhere&p={page}"
 
                 print(f"🔍 検索URL: {search_url}")
                 self.driver.get(search_url)
